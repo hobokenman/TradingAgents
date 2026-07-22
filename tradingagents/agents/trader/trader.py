@@ -42,8 +42,12 @@ def create_trader(llm):
                 "content": (
                     f"Based on a comprehensive analysis by a team of analysts, here is an investment "
                     f"plan tailored for {company_name}. {instrument_context} This plan incorporates "
-                    f"insights from current technical market trends, macroeconomic indicators, and "
-                    f"social media sentiment. Use this plan as a foundation for evaluating your next "
+                    f"insights from the analysts' reports, which may include technical market "
+                    f"trends, macroeconomic indicators, social media sentiment, and short-sale "
+                    f"positioning (short volume ratio, short interest, days-to-cover). Weigh "
+                    f"short-side pressure and potential squeeze risk only when the plan actually "
+                    f"cites such positioning data — never assume or invent figures that are not "
+                    f"present. Use this plan as a foundation for evaluating your next "
                     f"trading decision.\n\nProposed Investment Plan: {investment_plan}\n\n"
                     f"Leverage these insights to make an informed and strategic decision."
                 ),

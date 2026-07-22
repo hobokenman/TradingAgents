@@ -17,6 +17,10 @@ from .errors import (
     VendorNotConfiguredError,
     VendorRateLimitError,
 )
+from .finra import (
+    get_short_interest as get_finra_short_interest_data,
+    get_short_volume as get_finra_short_volume_data,
+)
 from .fred import get_macro_data as get_fred_macro_data
 from .polymarket import get_prediction_markets as get_polymarket_prediction_markets
 from .y_finance import (
@@ -34,26 +38,14 @@ logger = logging.getLogger(__name__)
 
 # Tools organized by category
 TOOLS_CATEGORIES = {
-    "core_stock_apis": {
-        "description": "OHLCV stock price data",
-        "tools": [
-            "get_stock_data"
-        ]
-    },
+    "core_stock_apis": {"description": "OHLCV stock price data", "tools": ["get_stock_data"]},
     "technical_indicators": {
         "description": "Technical analysis indicators",
-        "tools": [
-            "get_indicators"
-        ]
+        "tools": ["get_indicators"],
     },
     "fundamental_data": {
         "description": "Company fundamentals",
-        "tools": [
-            "get_fundamentals",
-            "get_balance_sheet",
-            "get_cashflow",
-            "get_income_statement"
-        ]
+        "tools": ["get_fundamentals", "get_balance_sheet", "get_cashflow", "get_income_statement"],
     },
     "news_data": {
         "description": "News and insider data",
@@ -61,25 +53,33 @@ TOOLS_CATEGORIES = {
             "get_news",
             "get_global_news",
             "get_insider_transactions",
-        ]
+        ],
     },
     "macro_data": {
         "description": "Macroeconomic indicators (rates, inflation, labor, growth)",
         "tools": [
             "get_macro_indicators",
-        ]
+        ],
     },
     "prediction_markets": {
         "description": "Market-implied probabilities for forward-looking events",
         "tools": [
             "get_prediction_markets",
-        ]
-    }
+        ],
+    },
+    "short_sale_data": {
+        "description": "Short sale volume and short interest positioning",
+        "tools": [
+            "get_short_volume",
+            "get_short_interest",
+        ],
+    },
 }
 
 VENDOR_LIST = [
     "yfinance",
     "fred",
+    "finra",
     "polymarket",
     "alpha_vantage",
 ]
@@ -89,7 +89,7 @@ VENDOR_LIST = [
 # sentinel instead of aborting the run (a bad LLM-supplied indicator, a missing
 # key, or a network blip should not crash an analysis over flavour data). Core
 # categories (prices, fundamentals, news) still raise so a broken primary is loud.
-OPTIONAL_CATEGORIES = {"macro_data", "prediction_markets"}
+OPTIONAL_CATEGORIES = {"macro_data", "prediction_markets", "short_sale_data"}
 
 # Mapping of methods to their vendor-specific implementations
 VENDOR_METHODS = {
@@ -141,7 +141,15 @@ VENDOR_METHODS = {
     "get_prediction_markets": {
         "polymarket": get_polymarket_prediction_markets,
     },
+    # short_sale_data
+    "get_short_volume": {
+        "finra": get_finra_short_volume_data,
+    },
+    "get_short_interest": {
+        "finra": get_finra_short_interest_data,
+    },
 }
+
 
 def get_category_for_method(method: str) -> str:
     """Get the category that contains the specified method."""
@@ -149,6 +157,7 @@ def get_category_for_method(method: str) -> str:
         if method in info["tools"]:
             return category
     raise ValueError(f"Method '{method}' not found in any category")
+
 
 def get_vendor(category: str, method: str = None) -> str:
     """Get the configured vendor for a data category or specific tool method.
@@ -165,11 +174,12 @@ def get_vendor(category: str, method: str = None) -> str:
     # Fall back to category-level configuration
     return config.get("data_vendors", {}).get(category, "default")
 
+
 def route_to_vendor(method: str, *args, **kwargs):
     """Route method calls to appropriate vendor implementation with fallback support."""
     category = get_category_for_method(method)
     vendor_config = get_vendor(category, method)
-    primary_vendors = [v.strip() for v in vendor_config.split(',')]
+    primary_vendors = [v.strip() for v in vendor_config.split(",")]
 
     if method not in VENDOR_METHODS:
         raise ValueError(f"Method '{method}' not supported")
@@ -200,8 +210,13 @@ def route_to_vendor(method: str, *args, **kwargs):
 
         try:
             return impl_func(*args, **kwargs)
-        except VendorRateLimitError:
+        except VendorRateLimitError as e:
             logger.warning("Vendor %r rate-limited for %s; trying next vendor.", vendor, method)
+            # Record it: if no vendor can serve the call, the throttle must
+            # surface (or degrade, for optional categories) rather than fall
+            # through to the generic "no available vendor" RuntimeError.
+            if first_error is None:
+                first_error = e
             continue
         except VendorNotConfiguredError as e:
             logger.warning("Vendor %r not configured for %s; trying next vendor.", vendor, method)
@@ -230,7 +245,8 @@ def route_to_vendor(method: str, *args, **kwargs):
             # verdict can't hide a broken primary (network/auth/etc.).
             logger.warning(
                 "Returning NO_DATA for %s, but a vendor errored earlier: %s",
-                method, first_error,
+                method,
+                first_error,
             )
         sym = last_no_data.symbol
         canonical = last_no_data.canonical
