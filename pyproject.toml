@@ -44,6 +44,12 @@ dev = [
 bedrock = [
     "langchain-aws>=1.5.0",
 ]
+# Run the pipeline through a Claude Code subscription instead of a metered API
+# key. Also needs the Claude Code CLI on PATH and an authenticated login
+# (`claude setup-token`): pip install "tradingagents[claude-code]".
+claude-code = [
+    "claude-agent-sdk>=0.2.0",
+]
 
 [project.scripts]
 tradingagents = "cli.main:app"

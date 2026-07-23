@@ -104,6 +104,18 @@ MODEL_OPTIONS: ProviderModeOptions = {
             ("Claude Opus 4.7 - Previous frontier, long-running agents", "claude-opus-4-7"),
         ],
     },
+    "claude_code": {
+        "quick": [
+            ("Claude Sonnet 5 - Best speed and intelligence balance", "claude-sonnet-5"),
+            ("Claude Haiku 4.5 - Fastest with near-frontier intelligence", "claude-haiku-4-5"),
+        ],
+        "deep": [
+            ("Claude Fable 5 - Most capable, long-running agents", "claude-fable-5"),
+            ("Claude Opus 4.8 - Frontier agentic coding and reasoning", "claude-opus-4-8"),
+            ("Claude Sonnet 5 - Near-frontier intelligence at Sonnet cost", "claude-sonnet-5"),
+            ("Claude Opus 4.7 - Previous frontier, long-running agents", "claude-opus-4-7"),
+        ],
+    },
     "google": {
         "quick": [
             ("Gemini 3.5 Flash - Latest, frontier agentic + coding (GA)", "gemini-3.5-flash"),
