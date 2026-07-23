@@ -50,11 +50,11 @@ cd TradingAgents
 
 Install with [uv](https://docs.astral.sh/uv/) (`uv.lock` is the source of truth for dependency versions):
 ```bash
-uv sync                              # add --extra claude-code or --extra bedrock as needed
+uv sync                              # add --extra codex, --extra claude-code, or --extra bedrock as needed
 uv run tradingagents
 ```
 
-Prefer pip? `pip install .` works too (`pip install ".[claude-code]"` for extras), in a virtual environment of your choice. TradingAgents requires Python 3.10 or newer and is tested on 3.10–3.13.
+Prefer pip? `pip install .` works too (`pip install ".[codex]"` for Codex subscription support), in a virtual environment of your choice. TradingAgents requires Python 3.10 or newer and is tested on 3.10–3.13.
 
 ### Docker
 
@@ -93,6 +93,26 @@ These are the common ones; `.env.example` carries the complete set, including Mi
 For Azure OpenAI, copy `.env.enterprise.example` to `.env.enterprise` and fill in your credentials.
 
 For AWS Bedrock, install the extra with `uv sync --extra bedrock` (or `pip install ".[bedrock]"`), set `llm_provider: "bedrock"`, configure AWS credentials (environment variables, `~/.aws/credentials`, or an IAM role) and `AWS_DEFAULT_REGION`, and use a Bedrock model ID, e.g. `us.anthropic.claude-opus-4-8-v1:0`.
+
+To run on an **OpenAI Codex/ChatGPT subscription** instead of a metered OpenAI API key, install the official SDK extra. The adapter reuses the ChatGPT login created by a Codex-capable IDE or the Codex CLI:
+
+```bash
+uv sync --extra codex
+uv run tradingagents
+```
+
+The Python extra includes the runtime used by the adapter, but it does **not** add a `codex` command to your shell. If the TradingAgents authentication preflight reports that you are signed out, install the [Codex CLI](https://developers.openai.com/codex/cli/) separately and run `codex login`. You can check an installed CLI session with `codex login status`.
+
+Choose **OpenAI Codex (ChatGPT subscription)** in the provider menu. The adapter verifies that Codex reports a ChatGPT account, rejects API-key accounts, and blanks `OPENAI_API_KEY`/`CODEX_API_KEY` in the Codex subprocess. Runs use ephemeral, read-only Codex threads; TradingAgents still executes its own market-data tools through LangGraph. The menu starts with the latest GPT-5.6 family and narrows the list to models available to the signed-in account when Codex reports them. Subscription limits still apply, and a complete multi-agent analysis can use many turns.
+
+For unattended or programmatic runs:
+
+```bash
+export TRADINGAGENTS_LLM_PROVIDER=codex
+export TRADINGAGENTS_DEEP_THINK_LLM=gpt-5.6-sol
+export TRADINGAGENTS_QUICK_THINK_LLM=gpt-5.6-luna
+export TRADINGAGENTS_CODEX_REASONING_EFFORT=medium
+```
 
 To run on a **Claude Code subscription** instead of a metered API key, install the extra with `uv sync --extra claude-code` (or `pip install ".[claude-code]"`) and make sure the [Claude Code CLI](https://claude.com/claude-code) is on your `PATH` and authenticated (`claude setup-token`). No `ANTHROPIC_API_KEY` is used — the provider blanks it for the CLI subprocess, since the CLI would otherwise prefer the key and put you back on API billing. This provider is not yet in the interactive menu, so select it via config or environment. Note that subscription usage is metered in rolling five-hour and weekly windows sized for interactive work: one analysis makes dozens of model calls, so unattended runs can exhaust a window.
 
@@ -170,7 +190,7 @@ An interface will appear showing results as they load, letting you track the age
 
 ### Implementation Details
 
-We built TradingAgents with LangGraph to ensure flexibility and modularity. The framework supports multiple LLM providers: OpenAI, Google, Anthropic, xAI, DeepSeek, Qwen (Alibaba DashScope, international and China endpoints), GLM (Zhipu), MiniMax (global + China), OpenRouter, Ollama for local models, Azure OpenAI for enterprise, and Claude Code for running on a Claude subscription instead of an API key.
+We built TradingAgents with LangGraph to ensure flexibility and modularity. The framework supports multiple LLM providers: OpenAI, OpenAI Codex with ChatGPT subscription authentication, Google, Anthropic, xAI, DeepSeek, Qwen (Alibaba DashScope, international and China endpoints), GLM (Zhipu), MiniMax (global + China), OpenRouter, Ollama for local models, Azure OpenAI for enterprise, and Claude Code for running on a Claude subscription instead of an API key.
 
 ### Python Usage
 
@@ -194,9 +214,9 @@ from tradingagents.graph.trading_graph import TradingAgentsGraph
 from tradingagents.default_config import DEFAULT_CONFIG
 
 config = DEFAULT_CONFIG.copy()
-config["llm_provider"] = "openai"        # e.g. openai, google, anthropic, deepseek, groq, ollama, claude_code; openai_compatible covers any OpenAI-compatible endpoint (vLLM, LM Studio, llama.cpp, ...)
-config["deep_think_llm"] = "gpt-5.5"     # Model for complex reasoning
-config["quick_think_llm"] = "gpt-5.4-mini" # Model for quick tasks
+config["llm_provider"] = "openai"          # e.g. openai, codex, google, anthropic, deepseek, groq, ollama, claude_code
+config["deep_think_llm"] = "gpt-5.6-sol"  # Model for complex reasoning
+config["quick_think_llm"] = "gpt-5.6-luna" # Model for quick tasks
 config["max_debate_rounds"] = 2
 
 ta = TradingAgentsGraph(debug=True, config=config)
@@ -255,6 +275,4 @@ config["temperature"] = 0.0
 What does not vary anymore: the analyzed company identity is resolved deterministically from the ticker before any agent runs, and the market analyst grounds exact price and indicator claims in a verified data snapshot. Earlier reports of "different companies" or fabricated price levels across runs are addressed by these two mechanisms.
 
 Backtest results are not guaranteed to match any published figure. Returns depend on the model, the temperature, the date range, data quality, and the sampling above. Treat the framework as a research scaffold for studying multi-agent analysis, not as a strategy with a fixed, replicable return.
-
-
 

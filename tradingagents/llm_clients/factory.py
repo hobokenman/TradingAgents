@@ -40,6 +40,11 @@ def create_llm_client(
 
         return ClaudeCodeClient(model, base_url, **kwargs)
 
+    if provider_lower == "codex":
+        from .codex_client import CodexClient
+
+        return CodexClient(model, base_url, **kwargs)
+
     if provider_lower == "google":
         from .google_client import GoogleClient
 

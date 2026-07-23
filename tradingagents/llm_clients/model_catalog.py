@@ -81,15 +81,34 @@ _MINIMAX_MODELS: dict[str, list[ModelOption]] = {
 MODEL_OPTIONS: ProviderModeOptions = {
     "openai": {
         "quick": [
+            ("GPT-5.6 Luna - Fastest, best for high-volume tasks", "gpt-5.6-luna"),
+            ("GPT-5.6 Terra - Balanced intelligence and speed", "gpt-5.6-terra"),
             ("GPT-5.4 Mini - Fast, strong coding and tool use", "gpt-5.4-mini"),
             ("GPT-5.4 Nano - Cheapest, high-volume tasks", "gpt-5.4-nano"),
-            ("GPT-5.5 - Latest frontier, 1M context", "gpt-5.5"),
         ],
         "deep": [
-            ("GPT-5.5 - Latest frontier, 1M context", "gpt-5.5"),
-            ("GPT-5.4 - Previous-gen frontier, 1M context, cost-effective", "gpt-5.4"),
-            ("GPT-5.2 - Strong reasoning, cost-effective", "gpt-5.2"),
-            ("GPT-5.5 Pro - Most capable, expensive ($30/$180 per 1M tokens)", "gpt-5.5-pro"),
+            ("GPT-5.6 Sol - Latest flagship for complex reasoning", "gpt-5.6-sol"),
+            ("GPT-5.6 Terra - Balanced intelligence and speed", "gpt-5.6-terra"),
+            ("GPT-5.5 - Previous-generation flagship", "gpt-5.5"),
+            ("GPT-5.4 - Previous-generation cost-effective model", "gpt-5.4"),
+            ("GPT-5.5 Pro - Previous-generation Pro model", "gpt-5.5-pro"),
+            ("GPT-5.2 - Previous-generation reasoning model", "gpt-5.2"),
+        ],
+    },
+    "codex": {
+        "quick": [
+            ("GPT-5.6 Luna - Fastest, best for high-volume tasks", "gpt-5.6-luna"),
+            ("GPT-5.6 Terra - Balanced intelligence and speed", "gpt-5.6-terra"),
+            ("GPT-5.4 Mini - Fast, strong tool use", "gpt-5.4-mini"),
+            ("GPT-5.3 Codex Spark - Pro-plan low-latency preview", "gpt-5.3-codex-spark"),
+            ("Custom model ID", "custom"),
+        ],
+        "deep": [
+            ("GPT-5.6 Sol - Recommended Codex flagship", "gpt-5.6-sol"),
+            ("GPT-5.6 Terra - Balanced intelligence and speed", "gpt-5.6-terra"),
+            ("GPT-5.5 - Previous-generation flagship", "gpt-5.5"),
+            ("GPT-5.4 - Previous-generation model", "gpt-5.4"),
+            ("Custom model ID", "custom"),
         ],
     },
     "anthropic": {

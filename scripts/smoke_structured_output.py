@@ -9,6 +9,7 @@ for Anthropic) returns clean instances on the schemas we ship.
 
 Usage:
     OPENAI_API_KEY=... python scripts/smoke_structured_output.py openai
+    python scripts/smoke_structured_output.py codex  # after `codex login`
     GOOGLE_API_KEY=... python scripts/smoke_structured_output.py google
     ANTHROPIC_API_KEY=... python scripts/smoke_structured_output.py anthropic
     DEEPSEEK_API_KEY=... python scripts/smoke_structured_output.py deepseek
@@ -30,7 +31,8 @@ from tradingagents.graph.signal_processing import SignalProcessor
 from tradingagents.llm_clients import create_llm_client
 
 PROVIDER_DEFAULTS = {
-    "openai": ("gpt-5.4-mini", None),
+    "openai": ("gpt-5.6-luna", None),
+    "codex": ("gpt-5.6-luna", None),
     "google": ("gemini-3.5-flash", None),
     "anthropic": ("claude-sonnet-4-6", None),
     "deepseek": ("deepseek-v4-flash", None),

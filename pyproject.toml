@@ -50,6 +50,12 @@ bedrock = [
 claude-code = [
     "claude-agent-sdk>=0.2.0",
 ]
+# Run the pipeline through an authenticated ChatGPT/Codex subscription. The
+# SDK includes the runtime used by the adapter; create the shared login first
+# with an installed Codex CLI or IDE: `codex login`.
+codex = [
+    "openai-codex>=0.144.4",
+]
 
 [project.scripts]
 tradingagents = "cli.main:app"

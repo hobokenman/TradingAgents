@@ -23,6 +23,7 @@ from cli.announcements import display_announcements, fetch_announcements
 from cli.stats_handler import StatsCallbackHandler
 from cli.utils import (
     ask_anthropic_effort,
+    ask_codex_reasoning_effort,
     ask_gemini_thinking_config,
     ask_glm_region,
     ask_minimax_region,
@@ -32,6 +33,7 @@ from cli.utils import (
     confirm_ollama_endpoint,
     detect_asset_type,
     ensure_api_key,
+    ensure_codex_subscription,
     get_ticker,
     prompt_openai_compatible_url,
     resolve_backend_url,
@@ -635,6 +637,8 @@ def get_user_selections():
         console.print(f"[green]✓ Backend URL:[/green] {backend_url}")
         # Still confirm/persist the API key so the run doesn't fail later.
         ensure_api_key(selected_llm_provider)
+        if selected_llm_provider == "codex":
+            ensure_codex_subscription()
     else:
         console.print(
             create_question_box(
@@ -673,6 +677,8 @@ def get_user_selections():
         # one and persist it to .env if it's missing, so the analysis run
         # doesn't fail later at the first API call.
         ensure_api_key(selected_llm_provider)
+        if selected_llm_provider == "codex":
+            ensure_codex_subscription()
 
     # Step 7: Thinking agents (skipped when either model is set via environment)
     if os.environ.get("TRADINGAGENTS_QUICK_THINK_LLM") or os.environ.get("TRADINGAGENTS_DEEP_THINK_LLM"):
@@ -698,12 +704,14 @@ def get_user_selections():
     # provider's own default.
     thinking_level = None
     reasoning_effort = None
+    codex_reasoning_effort = None
     anthropic_effort = None
 
     provider_lower = selected_llm_provider.lower()
     if provider_from_env:
         thinking_level = DEFAULT_CONFIG["google_thinking_level"]
         reasoning_effort = DEFAULT_CONFIG["openai_reasoning_effort"]
+        codex_reasoning_effort = DEFAULT_CONFIG["codex_reasoning_effort"]
         anthropic_effort = DEFAULT_CONFIG["anthropic_effort"]
     elif provider_lower == "google":
         thinking_level = thinking_value_or_prompt(
@@ -716,6 +724,12 @@ def get_user_selections():
             "TRADINGAGENTS_OPENAI_REASONING_EFFORT", "openai_reasoning_effort",
             "Reasoning effort", "Step 8: Reasoning Effort",
             "Configure OpenAI reasoning effort level", ask_openai_reasoning_effort,
+        )
+    elif provider_lower == "codex":
+        codex_reasoning_effort = thinking_value_or_prompt(
+            "TRADINGAGENTS_CODEX_REASONING_EFFORT", "codex_reasoning_effort",
+            "Codex reasoning effort", "Step 8: Codex Reasoning Effort",
+            "Configure Codex subscription reasoning effort", ask_codex_reasoning_effort,
         )
     elif provider_lower == "anthropic":
         anthropic_effort = thinking_value_or_prompt(
@@ -736,6 +750,7 @@ def get_user_selections():
         "deep_thinker": selected_deep_thinker,
         "google_thinking_level": thinking_level,
         "openai_reasoning_effort": reasoning_effort,
+        "codex_reasoning_effort": codex_reasoning_effort,
         "anthropic_effort": anthropic_effort,
         "output_language": output_language,
     }
@@ -992,6 +1007,7 @@ def _build_run_config(selections: dict, checkpoint: bool | None) -> dict:
     # Provider-specific thinking configuration
     config["google_thinking_level"] = selections.get("google_thinking_level")
     config["openai_reasoning_effort"] = selections.get("openai_reasoning_effort")
+    config["codex_reasoning_effort"] = selections.get("codex_reasoning_effort")
     config["anthropic_effort"] = selections.get("anthropic_effort")
     config["output_language"] = selections.get("output_language", "English")
     # --checkpoint/--no-checkpoint overrides only when explicitly given; omitting

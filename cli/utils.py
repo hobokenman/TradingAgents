@@ -300,11 +300,15 @@ def _select_model(provider: str, mode: str) -> str:
             "Please enter a deployment name.",
         )
 
+    options = get_model_options(provider, mode)
+    if provider.lower() == "codex":
+        options = _available_codex_model_options(options)
+
     choice = questionary.select(
         f"Select Your [{mode.title()}-Thinking LLM Engine]:",
         choices=[
             questionary.Choice(display, value=value)
-            for display, value in get_model_options(provider, mode)
+            for display, value in options
         ],
         instruction="\n- Use arrow keys to navigate\n- Press Enter to select",
         style=questionary.Style(
@@ -324,6 +328,38 @@ def _select_model(provider: str, mode: str) -> str:
         return _prompt_custom_model_id()
 
     return choice
+
+
+def _available_codex_model_options(
+    static_options: list[tuple[str, str]],
+) -> list[tuple[str, str]]:
+    """Prefer the models reported by the user's Codex subscription.
+
+    Model discovery is best-effort here because direct callers of the selection
+    helper may not have installed the optional SDK. The normal CLI flow already
+    performs a strict authentication preflight before reaching this point.
+    """
+    try:
+        from tradingagents.llm_clients.codex_chat import inspect_codex_subscription
+
+        available = inspect_codex_subscription().models
+    except Exception:
+        return static_options
+    if not available:
+        return static_options
+
+    available_set = set(available)
+    choices = [
+        (display, model)
+        for display, model in static_options
+        if model != "custom" and model in available_set
+    ]
+    if not choices:
+        choices = [
+            (f"{model} - Available to this Codex account", model) for model in available
+        ]
+    choices.append(("Custom model ID", "custom"))
+    return choices
 
 
 def select_shallow_thinking_agent(provider) -> str:
@@ -347,6 +383,7 @@ def _llm_provider_table() -> list[tuple[str, str, str | None]]:
     ollama_url = os.environ.get("OLLAMA_BASE_URL") or "http://localhost:11434/v1"
     return [
         ("OpenAI", "openai", "https://api.openai.com/v1"),
+        ("OpenAI Codex (ChatGPT subscription)", "codex", None),
         ("Google", "google", None),
         ("Anthropic", "anthropic", "https://api.anthropic.com/"),
         ("xAI", "xai", "https://api.x.ai/v1"),
@@ -436,10 +473,32 @@ def ask_openai_reasoning_effort() -> str:
         questionary.Choice("Medium (Default)", "medium"),
         questionary.Choice("High (More thorough)", "high"),
         questionary.Choice("Low (Faster)", "low"),
+        questionary.Choice("None (Fastest, model permitting)", "none"),
+        questionary.Choice("Extra High", "xhigh"),
+        questionary.Choice("Max (Most thorough)", "max"),
     ]
     return questionary.select(
         "Select Reasoning Effort:",
         choices=choices,
+        style=questionary.Style([
+            ("selected", "fg:cyan noinherit"),
+            ("highlighted", "fg:cyan noinherit"),
+            ("pointer", "fg:cyan noinherit"),
+        ]),
+    ).ask()
+
+
+def ask_codex_reasoning_effort() -> str:
+    """Ask for the Codex reasoning effort used for each subscription turn."""
+    return questionary.select(
+        "Select Codex Reasoning Effort:",
+        choices=[
+            questionary.Choice("Medium (Default)", "medium"),
+            questionary.Choice("Low (Faster)", "low"),
+            questionary.Choice("High (More thorough)", "high"),
+            questionary.Choice("Extra High", "xhigh"),
+            questionary.Choice("Max (Most thorough)", "max"),
+        ],
         style=questionary.Style([
             ("selected", "fg:cyan noinherit"),
             ("highlighted", "fg:cyan noinherit"),
@@ -648,6 +707,21 @@ def ensure_api_key(provider: str) -> str | None:
     os.environ[env_var] = key
     console.print(f"[green]Saved {env_var} to {env_path}[/green]")
     return key
+
+
+def ensure_codex_subscription() -> None:
+    """Fail early unless Codex is authenticated with a ChatGPT subscription."""
+    try:
+        from tradingagents.llm_clients.codex_chat import inspect_codex_subscription
+
+        info = inspect_codex_subscription()
+    except Exception as exc:
+        console.print(f"\n[red]Codex subscription authentication failed:[/red] {exc}")
+        raise SystemExit(1) from exc
+
+    identity = info.email or "ChatGPT account"
+    plan = f" ({info.plan_type})" if info.plan_type else ""
+    console.print(f"[green]✓ Codex subscription authenticated:[/green] {identity}{plan}")
 
 
 def ask_output_language() -> str:

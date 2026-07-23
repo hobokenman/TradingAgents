@@ -16,6 +16,9 @@ from tradingagents.llm_clients.openai_client import (
 @pytest.mark.parametrize(
     "model,expected",
     [
+        ("gpt-5.6-sol", True),
+        ("gpt-5.6-terra", True),
+        ("gpt-5.6-luna", True),
         ("gpt-5.5", True), ("gpt-5.4", True), ("gpt-5.4-mini", True),
         ("gpt-5.5-pro", True), ("o1", True), ("o3-mini", True),
         ("gpt-4.1", False), ("gpt-4o", False), ("gpt-4o-mini", False),
