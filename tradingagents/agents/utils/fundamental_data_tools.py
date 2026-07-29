@@ -77,3 +77,24 @@ def get_income_statement(
         str: A formatted report containing income statement data
     """
     return route_to_vendor("get_income_statement", ticker, freq, curr_date)
+
+
+@tool
+def get_earnings_call_transcript(
+    ticker: Annotated[str, "ticker symbol"],
+    curr_date: Annotated[str, "current date you are trading at, yyyy-mm-dd"] = None,
+) -> str:
+    """
+    Retrieve the most recent earnings call transcript for a given ticker symbol.
+    Resolves the latest fiscal quarter reported on or before curr_date (no
+    look-ahead) and returns the transcript with per-segment sentiment scores, so
+    management's own commentary and guidance can be used to explain the reported
+    financial numbers. Uses the configured earnings_transcripts vendor.
+    Args:
+        ticker (str): Ticker symbol of the company
+        curr_date (str): Current date you are trading at, yyyy-mm-dd
+    Returns:
+        str: A formatted earnings call transcript report, or a message noting
+        that no transcript is available.
+    """
+    return route_to_vendor("get_earnings_call_transcript", ticker, curr_date)

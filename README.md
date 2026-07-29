@@ -7,7 +7,7 @@ TradingAgents is a multi-agent trading framework that mirrors the dynamics of re
 Our framework decomposes complex trading tasks into specialized roles.
 
 ### Analyst Team
-- Fundamentals Analyst: Evaluates company financials and performance metrics, identifying intrinsic values and potential red flags.
+- Fundamentals Analyst: Evaluates company financials and performance metrics, identifying intrinsic values and potential red flags. Also pulls the most recent earnings-call transcript (with per-speaker sentiment) and, following a hedge-fund-analyst playbook, uses management's commentary, guidance, and Q&A to explain the reported numbers and inform the directional call.
 - Sentiment Analyst: Aggregates news headlines, StockTwits, and Reddit chatter into a single sentiment read to gauge short-term market mood.
 - News Analyst: Monitors global news and macroeconomic indicators, interpreting the impact of events on market conditions.
 - Technical Analyst: Utilizes technical indicators (like MACD and RSI) to detect trading patterns and forecast price movements, and folds in FINRA short-sale positioning (short volume ratio, short interest, days-to-cover) for US-listed equities.
@@ -138,11 +138,14 @@ Market data is fetched per category from an explicitly configured vendor. Only A
 | Category | Default vendor | Alternatives | Key |
 |---|---|---|---|
 | `core_stock_apis`, `technical_indicators`, `fundamental_data`, `news_data` | `yfinance` | `alpha_vantage` | none for yfinance; `ALPHA_VANTAGE_API_KEY` for Alpha Vantage |
+| `earnings_transcripts` (most recent earnings call, with per-speaker sentiment) | `alpha_vantage` | — | `ALPHA_VANTAGE_API_KEY` |
 | `macro_data` (rates, inflation, labor, growth) | `fred` | — | `FRED_API_KEY` ([free](https://fred.stlouisfed.org/docs/api/api_key.html)) |
 | `prediction_markets` (market-implied event probabilities) | `polymarket` | — | none |
 | `short_sale_data` (short volume ratio, short interest, days-to-cover) | `finra` | — | none; optional `FINRA_API_CLIENT_ID` / `FINRA_API_CLIENT_SECRET` raise the rate limits |
 
 Sentiment sources (StockTwits, Reddit) are public endpoints and need no credentials.
+
+Earnings-call transcripts are cached locally under `~/.tradingagents/cache/earnings_call/` (keyed by ticker and resolved fiscal quarter; override the base with `TRADINGAGENTS_CACHE_DIR`). The cache is checked before any API call, so a repeat lookup for the same ticker and date reuses the saved text and makes no Alpha Vantage requests — conserving the daily request budget. Transcripts of closed quarters are immutable, so entries never expire; delete the folder to force a refresh.
 
 Vendor chains are explicit, not silent fallbacks: whatever you set in `data_vendors` is exactly what gets called. List several for ordered fallback, e.g. `"yfinance,alpha_vantage"`. `tool_vendors` overrides the category default for a single tool:
 
@@ -151,7 +154,7 @@ config["data_vendors"]["fundamental_data"] = "alpha_vantage"
 config["tool_vendors"]["get_stock_data"] = "yfinance"   # per-tool override wins
 ```
 
-Macro, prediction-market, and short-sale data are enrichment: if a vendor fails or a key is missing, the run degrades to a sentinel note in the report instead of aborting. A failure in prices, fundamentals, or news is loud by design.
+Macro, prediction-market, short-sale, and earnings-transcript data are enrichment: if a vendor fails or a key is missing, the run degrades to a sentinel note in the report instead of aborting. A failure in prices, fundamentals, or news is loud by design.
 
 ### CLI Usage
 

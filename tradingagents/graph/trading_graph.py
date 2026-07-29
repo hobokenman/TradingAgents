@@ -15,6 +15,7 @@ from tradingagents.agents.utils.agent_utils import (
     build_instrument_context,
     get_balance_sheet,
     get_cashflow,
+    get_earnings_call_transcript,
     get_fundamentals,
     get_global_news,
     get_income_statement,
@@ -234,6 +235,7 @@ class TradingAgentsGraph:
                     get_balance_sheet,
                     get_cashflow,
                     get_income_statement,
+                    get_earnings_call_transcript,
                 ]
             ),
         }

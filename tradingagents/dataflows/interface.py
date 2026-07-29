@@ -3,6 +3,7 @@ import logging
 from .alpha_vantage import (
     get_balance_sheet as get_alpha_vantage_balance_sheet,
     get_cashflow as get_alpha_vantage_cashflow,
+    get_earnings_call_transcript as get_alpha_vantage_earnings_call_transcript,
     get_fundamentals as get_alpha_vantage_fundamentals,
     get_global_news as get_alpha_vantage_global_news,
     get_income_statement as get_alpha_vantage_income_statement,
@@ -47,6 +48,10 @@ TOOLS_CATEGORIES = {
         "description": "Company fundamentals",
         "tools": ["get_fundamentals", "get_balance_sheet", "get_cashflow", "get_income_statement"],
     },
+    "earnings_transcripts": {
+        "description": "Earnings call transcripts with per-speaker sentiment",
+        "tools": ["get_earnings_call_transcript"],
+    },
     "news_data": {
         "description": "News and insider data",
         "tools": [
@@ -89,7 +94,12 @@ VENDOR_LIST = [
 # sentinel instead of aborting the run (a bad LLM-supplied indicator, a missing
 # key, or a network blip should not crash an analysis over flavour data). Core
 # categories (prices, fundamentals, news) still raise so a broken primary is loud.
-OPTIONAL_CATEGORIES = {"macro_data", "prediction_markets", "short_sale_data"}
+OPTIONAL_CATEGORIES = {
+    "macro_data",
+    "prediction_markets",
+    "short_sale_data",
+    "earnings_transcripts",
+}
 
 # Mapping of methods to their vendor-specific implementations
 VENDOR_METHODS = {
@@ -119,6 +129,10 @@ VENDOR_METHODS = {
     "get_income_statement": {
         "alpha_vantage": get_alpha_vantage_income_statement,
         "yfinance": get_yfinance_income_statement,
+    },
+    # earnings_transcripts
+    "get_earnings_call_transcript": {
+        "alpha_vantage": get_alpha_vantage_earnings_call_transcript,
     },
     # news_data
     "get_news": {
