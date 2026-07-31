@@ -24,11 +24,14 @@ from tradingagents.agents.utils.agent_utils import (
     get_macro_indicators,
     get_news,
     get_prediction_markets,
+    get_sec_filing,
     get_short_interest,
     get_short_volume,
     get_stock_data,
     get_verified_market_snapshot,
+    read_sec_filing,
     resolve_instrument_identity,
+    search_sec_filing,
 )
 from tradingagents.agents.utils.memory import TradingMemoryLog
 from tradingagents.dataflows.config import set_config
@@ -236,6 +239,9 @@ class TradingAgentsGraph:
                     get_cashflow,
                     get_income_statement,
                     get_earnings_call_transcript,
+                    get_sec_filing,
+                    search_sec_filing,
+                    read_sec_filing,
                 ]
             ),
         }

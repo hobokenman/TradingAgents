@@ -24,6 +24,11 @@ from .finra import (
 )
 from .fred import get_macro_data as get_fred_macro_data
 from .polymarket import get_prediction_markets as get_polymarket_prediction_markets
+from .sec_edgar import (
+    get_sec_filing as get_sec_edgar_filing,
+    read_sec_filing as read_sec_edgar_filing,
+    search_sec_filing as search_sec_edgar_filing,
+)
 from .y_finance import (
     get_balance_sheet as get_yfinance_balance_sheet,
     get_cashflow as get_yfinance_cashflow,
@@ -51,6 +56,10 @@ TOOLS_CATEGORIES = {
     "earnings_transcripts": {
         "description": "Earnings call transcripts with per-speaker sentiment",
         "tools": ["get_earnings_call_transcript"],
+    },
+    "sec_filings": {
+        "description": ("SEC EDGAR filings: bounded indexes, search, and paginated exact excerpts"),
+        "tools": ["get_sec_filing", "search_sec_filing", "read_sec_filing"],
     },
     "news_data": {
         "description": "News and insider data",
@@ -87,6 +96,7 @@ VENDOR_LIST = [
     "finra",
     "polymarket",
     "alpha_vantage",
+    "sec_edgar",
 ]
 
 # Optional enrichment categories. These add macro/event context to the news
@@ -99,6 +109,7 @@ OPTIONAL_CATEGORIES = {
     "prediction_markets",
     "short_sale_data",
     "earnings_transcripts",
+    "sec_filings",
 }
 
 # Mapping of methods to their vendor-specific implementations
@@ -133,6 +144,16 @@ VENDOR_METHODS = {
     # earnings_transcripts
     "get_earnings_call_transcript": {
         "alpha_vantage": get_alpha_vantage_earnings_call_transcript,
+    },
+    # sec_filings
+    "get_sec_filing": {
+        "sec_edgar": get_sec_edgar_filing,
+    },
+    "search_sec_filing": {
+        "sec_edgar": search_sec_edgar_filing,
+    },
+    "read_sec_filing": {
+        "sec_edgar": read_sec_edgar_filing,
     },
     # news_data
     "get_news": {

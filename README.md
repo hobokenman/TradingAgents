@@ -139,6 +139,7 @@ Market data is fetched per category from an explicitly configured vendor. Only A
 |---|---|---|---|
 | `core_stock_apis`, `technical_indicators`, `fundamental_data`, `news_data` | `yfinance` | `alpha_vantage` | none for yfinance; `ALPHA_VANTAGE_API_KEY` for Alpha Vantage |
 | `earnings_transcripts` (most recent earnings call, with per-speaker sentiment) | `alpha_vantage` | — | `ALPHA_VANTAGE_API_KEY` |
+| `sec_filings` (bounded index, search, and paginated exact excerpts for 10-K/10-Q and recent 8-K events) | `sec_edgar` | — | none; set `SEC_EDGAR_USER_AGENT="Your Name your@email.com"` to identify your client per [SEC policy](https://www.sec.gov/os/accessing-edgar-data) |
 | `macro_data` (rates, inflation, labor, growth) | `fred` | — | `FRED_API_KEY` ([free](https://fred.stlouisfed.org/docs/api/api_key.html)) |
 | `prediction_markets` (market-implied event probabilities) | `polymarket` | — | none |
 | `short_sale_data` (short volume ratio, short interest, days-to-cover) | `finra` | — | none; optional `FINRA_API_CLIENT_ID` / `FINRA_API_CLIENT_SECRET` raise the rate limits |
@@ -146,6 +147,8 @@ Market data is fetched per category from an explicitly configured vendor. Only A
 Sentiment sources (StockTwits, Reddit) are public endpoints and need no credentials.
 
 Earnings-call transcripts are cached locally under `~/.tradingagents/cache/earnings_call/` (keyed by ticker and resolved fiscal quarter; override the base with `TRADINGAGENTS_CACHE_DIR`). The cache is checked before any API call, so a repeat lookup for the same ticker and date reuses the saved text and makes no Alpha Vantage requests — conserving the daily request budget. Transcripts of closed quarters are immutable, so entries never expire; delete the folder to force a refresh.
+
+SEC filings work the same way under `~/.tradingagents/cache/sec_filings/` (ticker→CIK mapping, filing selection per date, and complete extracted filing text per accession number). The analyst receives a bounded index and uses filing-specific search/read tools for exact excerpts, avoiding oversized tool responses without granting arbitrary filesystem access. Filed documents are immutable, so a warm lookup makes zero EDGAR requests and stays clear of SEC's fair-access throttling.
 
 Vendor chains are explicit, not silent fallbacks: whatever you set in `data_vendors` is exactly what gets called. List several for ordered fallback, e.g. `"yfinance,alpha_vantage"`. `tool_vendors` overrides the category default for a single tool:
 

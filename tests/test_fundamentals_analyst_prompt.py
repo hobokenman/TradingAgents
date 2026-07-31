@@ -1,4 +1,4 @@
-"""The fundamentals analyst must inject the earnings-call interpretation SOP.
+"""The fundamentals analyst must inject earnings-call and SEC-filing SOPs.
 
 Guards that the SOP guidance actually reaches the LLM's system prompt and that
 ``system_message`` is a real ``str`` (a prior trailing comma made it a 1-element
@@ -44,6 +44,50 @@ def _run_node_and_capture_system_prompt():
 def test_sop_constant_is_nonempty_str():
     assert isinstance(fa.EARNINGS_CALL_SOP, str)
     assert fa.EARNINGS_CALL_SOP.strip()
+
+
+@pytest.mark.unit
+def test_sec_sop_constant_is_nonempty_str():
+    assert isinstance(fa.SEC_FILINGS_SOP, str)
+    assert fa.SEC_FILINGS_SOP.strip()
+
+
+@pytest.mark.unit
+def test_system_prompt_contains_sec_sop():
+    system_text = _run_node_and_capture_system_prompt()
+    # Distinctive SEC-filing SOP markers must survive into the system prompt.
+    assert "get_sec_filing" in system_text
+    assert "search_sec_filing" in system_text
+    assert "read_sec_filing" in system_text
+    assert "bounded metadata/heading index" in system_text
+    assert "do not request that same form again" in system_text
+    assert "Never claim the filing is unreviewable merely because it is large" in system_text
+    assert "Executive investment conclusion" in system_text
+    assert "Red flags and positive inflections" in system_text
+    assert "five items to monitor in the next filing" in system_text
+    # 8-K event guidance is present.
+    assert "8-K event filings" in system_text
+    assert "routine housekeeping or thesis-relevant" in system_text
+    # Fact/statement/interpretation discipline is preserved.
+    assert (
+        "separate reported facts, management statements, and analyst interpretation" in system_text
+    )
+
+
+@pytest.mark.unit
+def test_sec_filing_tool_is_bound():
+    llm = MagicMock()
+    llm.bind_tools.return_value = MagicMock(side_effect=lambda pv: AIMessage(content="ok"))
+    node = fa.create_fundamentals_analyst(llm)
+    node(
+        {
+            "trade_date": "2025-07-28",
+            "instrument_context": "The instrument is AAPL (a US stock).",
+            "messages": [],
+        }
+    )
+    bound_names = [tool.name for tool in llm.bind_tools.call_args[0][0]]
+    assert {"get_sec_filing", "search_sec_filing", "read_sec_filing"} <= set(bound_names)
 
 
 @pytest.mark.unit

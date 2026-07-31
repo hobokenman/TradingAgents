@@ -145,6 +145,7 @@ DEFAULT_CONFIG = _apply_env_overrides(
             "technical_indicators": "yfinance",  # Options: alpha_vantage, yfinance
             "fundamental_data": "yfinance",  # Options: alpha_vantage, yfinance
             "earnings_transcripts": "alpha_vantage",  # Options: alpha_vantage (needs ALPHA_VANTAGE_API_KEY)
+            "sec_filings": "sec_edgar",  # Options: sec_edgar (keyless; set SEC_EDGAR_USER_AGENT to identify your client per SEC policy)
             "news_data": "yfinance",  # Options: alpha_vantage, yfinance
             "macro_data": "fred",  # Options: fred (needs FRED_API_KEY)
             "prediction_markets": "polymarket",  # Options: polymarket (keyless)
