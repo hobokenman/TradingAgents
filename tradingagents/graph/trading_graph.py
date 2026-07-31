@@ -135,6 +135,7 @@ class TradingAgentsGraph:
             self.deep_thinking_llm,
             self.tool_nodes,
             self.conditional_logic,
+            buffett_enabled=bool(self.config.get("buffett_researcher_enabled", True)),
         )
 
         self.propagator = Propagator(
@@ -385,6 +386,7 @@ class TradingAgentsGraph:
                 f"debate={self.config['max_debate_rounds']}",
                 f"risk={self.config['max_risk_discuss_rounds']}",
                 f"asset={asset_type}",
+                f"buffett={bool(self.config.get('buffett_researcher_enabled', True))}",
             ]
         )
 
@@ -519,6 +521,7 @@ class TradingAgentsGraph:
             "sentiment_report": final_state["sentiment_report"],
             "news_report": final_state["news_report"],
             "fundamentals_report": final_state["fundamentals_report"],
+            "buffett_report": final_state.get("buffett_report", ""),
             "investment_debate_state": {
                 "bull_history": final_state["investment_debate_state"]["bull_history"],
                 "bear_history": final_state["investment_debate_state"]["bear_history"],

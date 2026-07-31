@@ -59,13 +59,33 @@ def test_int_coercion(monkeypatch):
 @pytest.mark.parametrize(
     "raw,expected",
     [
-        ("true", True), ("True", True), ("1", True), ("yes", True), ("on", True),
-        ("false", False), ("False", False), ("0", False), ("no", False), ("off", False),
+        ("true", True),
+        ("True", True),
+        ("1", True),
+        ("yes", True),
+        ("on", True),
+        ("false", False),
+        ("False", False),
+        ("0", False),
+        ("no", False),
+        ("off", False),
     ],
 )
 def test_bool_coercion(monkeypatch, raw, expected):
     dc = _reload_with_env(monkeypatch, TRADINGAGENTS_CHECKPOINT_ENABLED=raw)
     assert dc.DEFAULT_CONFIG["checkpoint_enabled"] is expected
+
+
+def test_buffett_researcher_defaults_on(monkeypatch):
+    dc = _reload_with_env(monkeypatch)
+    assert dc.DEFAULT_CONFIG["buffett_researcher_enabled"] is True
+    assert dc.DEFAULT_CONFIG["buffett_principles_path"] is None
+
+
+@pytest.mark.parametrize("raw,expected", [("false", False), ("off", False), ("1", True)])
+def test_buffett_researcher_toggle(monkeypatch, raw, expected):
+    dc = _reload_with_env(monkeypatch, TRADINGAGENTS_BUFFETT_RESEARCHER=raw)
+    assert dc.DEFAULT_CONFIG["buffett_researcher_enabled"] is expected
 
 
 def test_reasoning_thinking_overrides(monkeypatch):

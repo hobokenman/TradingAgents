@@ -16,6 +16,7 @@ _ENV_OVERRIDES = {
     "TRADINGAGENTS_MAX_DEBATE_ROUNDS": "max_debate_rounds",
     "TRADINGAGENTS_MAX_RISK_ROUNDS": "max_risk_discuss_rounds",
     "TRADINGAGENTS_CHECKPOINT_ENABLED": "checkpoint_enabled",
+    "TRADINGAGENTS_BUFFETT_RESEARCHER": "buffett_researcher_enabled",
     "TRADINGAGENTS_BENCHMARK_TICKER": "benchmark_ticker",
     "TRADINGAGENTS_TEMPERATURE": "temperature",
     "TRADINGAGENTS_LLM_MAX_RETRIES": "llm_max_retries",
@@ -86,6 +87,12 @@ DEFAULT_CONFIG = _apply_env_overrides(
         # the oldest resolved entries are pruned once this limit is exceeded.
         # Pending entries are never pruned. None disables rotation entirely.
         "memory_log_max_entries": None,
+        # Value-investing researcher that runs before the bull/bear debate. Its
+        # prompt is grounded in the distilled shareholder-letter principles at
+        # ``buffett_principles_path``; leave that None to use the document
+        # shipped with the package (see scripts/distill_buffett_principles.py).
+        "buffett_researcher_enabled": True,
+        "buffett_principles_path": None,
         # LLM settings
         "llm_provider": "openai",
         "deep_think_llm": "gpt-5.6-sol",

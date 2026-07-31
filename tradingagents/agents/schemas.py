@@ -74,9 +74,10 @@ class ResearchPlan(BaseModel):
     """Structured investment plan produced by the Research Manager.
 
     Hand-off to the Trader: the recommendation pins the directional view,
-    the rationale captures which side of the bull/bear debate carried the
-    argument, and the strategic actions translate that into concrete
-    instructions the trader can execute against.
+    the rationale captures which of the bull case, the bear case, and the
+    value-investing assessment carried the argument, and the strategic
+    actions translate that into concrete instructions the trader can
+    execute against.
     """
 
     recommendation: PortfolioRating = Field(
@@ -89,8 +90,10 @@ class ResearchPlan(BaseModel):
     )
     rationale: str = Field(
         description=(
-            "Conversational summary of the key points from both sides of the "
-            "debate, ending with which arguments led to the recommendation. "
+            "Conversational summary of the key points from the bull case, the "
+            "bear case, and the value-investing assessment, ending with which "
+            "arguments led to the recommendation. Where the value assessment "
+            "diverges from the debate, explain which view you weighted and why. "
             "Speak naturally, as if to a teammate."
         ),
     )
@@ -104,13 +107,105 @@ class ResearchPlan(BaseModel):
 
 def render_research_plan(plan: ResearchPlan) -> str:
     """Render a ResearchPlan to markdown for storage and the trader's prompt context."""
-    return "\n".join([
-        f"**Recommendation**: {plan.recommendation.value}",
-        "",
-        f"**Rationale**: {plan.rationale}",
-        "",
-        f"**Strategic Actions**: {plan.strategic_actions}",
-    ])
+    return "\n".join(
+        [
+            f"**Recommendation**: {plan.recommendation.value}",
+            "",
+            f"**Rationale**: {plan.rationale}",
+            "",
+            f"**Strategic Actions**: {plan.strategic_actions}",
+        ]
+    )
+
+
+# ---------------------------------------------------------------------------
+# Buffett Researcher
+# ---------------------------------------------------------------------------
+
+
+class BuffettVerdict(str, Enum):
+    """Business-quality-and-price verdict from the Buffett Researcher.
+
+    Deliberately not a Buy/Sell rating: the value-investing frame separates
+    the quality of the business from the price on offer, and treats "I cannot
+    judge this" as a legitimate third answer rather than a hedged Hold. The
+    Research Manager maps this onto a portfolio rating alongside the debate.
+    """
+
+    WONDERFUL_FAIR_PRICE = "Wonderful Business, Fair Price"
+    WONDERFUL_RICH_PRICE = "Wonderful Business, Rich Price"
+    FAIR_BUSINESS = "Fair Business"
+    NOT_A_FRANCHISE = "Not a Franchise"
+    TOO_HARD = "Too Hard"
+
+
+class BuffettAssessment(BaseModel):
+    """Structured value-investing assessment produced by the Buffett Researcher.
+
+    Mirrors the order the principles document prescribes: understand the
+    business and its moat, judge the people running it, then and only then
+    look at the price.
+    """
+
+    verdict: BuffettVerdict = Field(
+        description=(
+            "The overall judgment. Exactly one of: "
+            "'Wonderful Business, Fair Price' (durable moat and the price offers a "
+            "margin of safety); "
+            "'Wonderful Business, Rich Price' (durable moat but no margin of safety today); "
+            "'Fair Business' (adequate economics, no durable franchise); "
+            "'Not a Franchise' (commodity economics, poor returns on capital, or a "
+            "narrowing moat); "
+            "'Too Hard' (outside the circle of competence, or the ten-year picture "
+            "cannot be forecast). Use 'Too Hard' whenever that is the honest answer "
+            "rather than manufacturing a view."
+        ),
+    )
+    moat: str = Field(
+        description=(
+            "The durable competitive advantage, named concretely, and whether it is "
+            "widening or narrowing. Cite evidence of pricing power from the reports. "
+            "Say plainly if there is no identifiable moat."
+        ),
+    )
+    management: str = Field(
+        description=(
+            "Assessment of candor and capital allocation: acquisitions, buybacks, "
+            "and whether retained earnings have created at least a dollar of value "
+            "per dollar retained. Note if the reports do not support a judgment."
+        ),
+    )
+    valuation: str = Field(
+        description=(
+            "Owner earnings as distinct from reported earnings, return on equity "
+            "without leverage, a conservative view of intrinsic value, and the "
+            "margin of safety (or lack of one) at the current price."
+        ),
+    )
+    thesis: str = Field(
+        description=(
+            "The verdict argued in Buffett's plain-spoken register, naming which "
+            "principles decided it and what would have to change to reverse it. "
+            "Conversational and direct, not a list. Two to five paragraphs."
+        ),
+    )
+
+
+def render_buffett_assessment(assessment: BuffettAssessment) -> str:
+    """Render a BuffettAssessment to the markdown shape the rest of the system consumes."""
+    return "\n".join(
+        [
+            f"**Verdict**: {assessment.verdict.value}",
+            "",
+            f"**Moat**: {assessment.moat}",
+            "",
+            f"**Management**: {assessment.management}",
+            "",
+            f"**Valuation**: {assessment.valuation}",
+            "",
+            f"**Thesis**: {assessment.thesis}",
+        ]
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -173,10 +268,12 @@ def render_trader_proposal(proposal: TraderProposal) -> str:
         parts.extend(["", f"**Stop Loss**: {proposal.stop_loss}"])
     if proposal.position_sizing:
         parts.extend(["", f"**Position Sizing**: {proposal.position_sizing}"])
-    parts.extend([
-        "",
-        f"FINAL TRANSACTION PROPOSAL: **{proposal.action.value.upper()}**",
-    ])
+    parts.extend(
+        [
+            "",
+            f"FINAL TRANSACTION PROPOSAL: **{proposal.action.value.upper()}**",
+        ]
+    )
     return "\n".join(parts)
 
 
@@ -332,10 +429,12 @@ def render_sentiment_report(report: SentimentReport) -> str:
     narrative so the saved report is both human-readable and machine-parseable
     without regex.
     """
-    return "\n".join([
-        f"**Overall Sentiment:** **{report.overall_band.value}** "
-        f"(Score: {report.overall_score:.1f}/10)",
-        f"**Confidence:** {report.confidence.capitalize()}",
-        "",
-        report.narrative,
-    ])
+    return "\n".join(
+        [
+            f"**Overall Sentiment:** **{report.overall_band.value}** "
+            f"(Score: {report.overall_score:.1f}/10)",
+            f"**Confidence:** {report.confidence.capitalize()}",
+            "",
+            report.narrative,
+        ]
+    )

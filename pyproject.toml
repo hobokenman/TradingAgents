@@ -56,6 +56,15 @@ claude-code = [
 codex = [
     "openai-codex>=0.144.4",
 ]
+# Rebuild the Buffett Researcher's principles document from the Berkshire
+# shareholder letters (scripts/fetch_buffett_letters.py + distill). Needed only
+# for that offline step; at runtime the agent reads a plain markdown file.
+# pypdf parses the 2004-onward letters; brotli lets urllib3 decode the source
+# site's Sucuri cache, which serves brotli regardless of Accept-Encoding.
+buffett = [
+    "pypdf>=6.14",
+    "brotli>=1.2",
+]
 
 [project.scripts]
 tradingagents = "cli.main:app"
@@ -65,6 +74,7 @@ include = ["tradingagents*", "cli*"]
 
 [tool.setuptools.package-data]
 cli = ["static/*"]
+"tradingagents.agents.researchers" = ["*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -8,6 +8,7 @@ from langgraph.prebuilt import ToolNode
 from tradingagents.agents import (
     create_aggressive_debator,
     create_bear_researcher,
+    create_buffett_researcher,
     create_bull_researcher,
     create_conservative_debator,
     create_fundamentals_analyst,
@@ -51,16 +52,16 @@ class GraphSetup:
         deep_thinking_llm: Any,
         tool_nodes: dict[str, ToolNode],
         conditional_logic: ConditionalLogic,
+        buffett_enabled: bool = True,
     ):
         """Initialize with required components."""
         self.quick_thinking_llm = quick_thinking_llm
         self.deep_thinking_llm = deep_thinking_llm
         self.tool_nodes = tool_nodes
         self.conditional_logic = conditional_logic
+        self.buffett_enabled = buffett_enabled
 
-    def setup_graph(
-        self, selected_analysts=("market", "social", "news", "fundamentals")
-    ):
+    def setup_graph(self, selected_analysts=("market", "social", "news", "fundamentals")):
         """Set up and compile the agent workflow graph.
 
         Args:
@@ -101,6 +102,10 @@ class GraphSetup:
             workflow.add_node(spec.tool_node, self.tool_nodes[spec.key])
 
         # Add other nodes
+        if self.buffett_enabled:
+            workflow.add_node(
+                "Buffett Researcher", create_buffett_researcher(self.deep_thinking_llm)
+            )
         workflow.add_node("Bull Researcher", bull_researcher_node)
         workflow.add_node("Bear Researcher", bear_researcher_node)
         workflow.add_node("Research Manager", research_manager_node)
@@ -113,6 +118,8 @@ class GraphSetup:
         # Define edges
         # Start with the first analyst
         workflow.add_edge(START, plan.specs[0].agent_node)
+
+        research_entry = "Buffett Researcher" if self.buffett_enabled else "Bull Researcher"
 
         # Connect analysts in sequence
         for i, spec in enumerate(plan.specs):
@@ -128,11 +135,16 @@ class GraphSetup:
             )
             workflow.add_edge(current_tools, current_analyst)
 
-            # Connect to next analyst or to Bull Researcher if this is the last analyst
+            # Connect to next analyst or hand off to the research team if last
             if i < len(plan.specs) - 1:
                 workflow.add_edge(current_clear, plan.specs[i + 1].agent_node)
             else:
-                workflow.add_edge(current_clear, "Bull Researcher")
+                workflow.add_edge(current_clear, research_entry)
+
+        # The Buffett Researcher takes no turn in the debate: it publishes a
+        # standing value thesis, then hands off to Bull unconditionally.
+        if self.buffett_enabled:
+            workflow.add_edge("Buffett Researcher", "Bull Researcher")
 
         # Both research-debate edges share the complete DEBATE_PATH_MAP (#1088).
         for debate_node in ("Bull Researcher", "Bear Researcher"):

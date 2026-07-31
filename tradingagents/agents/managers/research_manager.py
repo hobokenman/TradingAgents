@@ -14,6 +14,29 @@ from tradingagents.agents.utils.structured import (
 )
 
 
+def _buffett_section(state) -> str:
+    """Render the value assessment as its own prompt section, or nothing if absent.
+
+    Kept separate from the debate history so the manager weighs it as an
+    independent opinion rather than as one more argument in the exchange. It
+    is empty when the Buffett Researcher is disabled.
+    """
+    report = (state.get("buffett_report") or "").strip()
+    if not report:
+        return ""
+    return f"""
+**Independent Value-Investing Assessment:**
+
+This is a long-horizon judgment on business quality and price, formed before the debate and independent of it. Weigh it against the debate rather than deferring to it: the debaters are arguing a shorter horizon and have access to sentiment and news signals the value assessment deliberately discounts. A "Too Hard" verdict is an abstention, not a bearish call.
+
+Where this assessment and the debate point in different directions, say which one you weighted and why.
+
+{report}
+
+---
+"""
+
+
 def create_research_manager(llm):
     structured_llm = bind_structured(llm, ResearchPlan, "Research Manager")
 
@@ -39,7 +62,7 @@ def create_research_manager(llm):
 Commit to a clear stance whenever the debate's strongest arguments warrant one; reserve Hold for situations where the evidence on both sides is genuinely balanced.
 
 ---
-
+{_buffett_section(state)}
 **Debate History:**
 {history}
 

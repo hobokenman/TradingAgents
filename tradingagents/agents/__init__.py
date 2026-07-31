@@ -8,6 +8,7 @@ from .analysts.sentiment_analyst import (
 from .managers.portfolio_manager import create_portfolio_manager
 from .managers.research_manager import create_research_manager
 from .researchers.bear_researcher import create_bear_researcher
+from .researchers.buffett_researcher import create_buffett_researcher
 from .researchers.bull_researcher import create_bull_researcher
 from .risk_mgmt.aggressive_debator import create_aggressive_debator
 from .risk_mgmt.conservative_debator import create_conservative_debator
@@ -22,6 +23,7 @@ __all__ = [
     "InvestDebateState",
     "RiskDebateState",
     "create_bear_researcher",
+    "create_buffett_researcher",
     "create_bull_researcher",
     "create_research_manager",
     "create_fundamentals_analyst",

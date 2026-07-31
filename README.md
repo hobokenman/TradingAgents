@@ -18,6 +18,7 @@ Our framework decomposes complex trading tasks into specialized roles.
 
 ### Researcher Team
 - Comprises both bullish and bearish researchers who critically assess the insights provided by the Analyst Team. Through structured debates, they balance potential gains against inherent risks.
+- Buffett Researcher: a value investor that runs ahead of the debate and judges the business the way Warren Buffett does in the Berkshire Hathaway shareholder letters — moat and pricing power first, then management's candor and capital allocation, then price against a conservative estimate of intrinsic value. It returns one of five verdicts (Wonderful Business at a Fair Price, Wonderful Business at a Rich Price, Fair Business, Not a Franchise, or Too Hard) and is free to abstain rather than manufacture a view. Bull and Bear argue against its thesis, and the Research Manager weighs it as an independent long-horizon opinion alongside the debate. See [Buffett Researcher](#buffett-researcher) for how to reground it on the letters yourself.
 
 <p align="center">
   <img src="assets/researcher.png" width="70%" style="display: inline-block; margin: 0 2%;">
@@ -158,6 +159,24 @@ config["tool_vendors"]["get_stock_data"] = "yfinance"   # per-tool override wins
 ```
 
 Macro, prediction-market, short-sale, and earnings-transcript data are enrichment: if a vendor fails or a key is missing, the run degrades to a sentinel note in the report instead of aborting. A failure in prices, fundamentals, or news is loud by design.
+
+### Buffett Researcher
+
+The Buffett Researcher is on by default and needs no setup. Its frame of reference is a distilled principles document — circle of competence, moats and pricing power, owner earnings, margin of safety, capital allocation, and the too-hard pile — and a baseline version ships with the package, so the agent works out of the box.
+
+To reground it on the letters themselves, build your own document from the full 1977–2025 corpus:
+
+```bash
+uv sync --extra buffett                                   # pypdf + brotli, needed only for this step
+uv run python scripts/fetch_buffett_letters.py            # 49 letters -> ~/.tradingagents/cache/buffett_letters/
+uv run python scripts/distill_buffett_principles.py       # map-reduce -> ~/.tradingagents/buffett/principles.md
+```
+
+The result takes precedence over the shipped baseline automatically; delete it to revert. Distillation costs roughly one cheap call per letter plus one deep call, and per-letter notes are cached, so re-running after a new letter is published only processes the new one. Point `buffett_principles_path` at a different file to hand-write the document instead.
+
+The letters are copyrighted material published by Berkshire Hathaway. `fetch_buffett_letters.py` downloads them to your local cache for personal research; neither the letters nor any excerpt of them is committed to this repository or redistributed, and only the synthesized principles document reaches a prompt.
+
+Turn the agent off with `TRADINGAGENTS_BUFFETT_RESEARCHER=false` (or `config["buffett_researcher_enabled"] = False`), which removes the node from the graph and hands the analysts straight to the Bull Researcher. For crypto and other non-equity assets the agent abstains with a "Too Hard" verdict without making an LLM call, since the value framework has nothing to price.
 
 ### CLI Usage
 
