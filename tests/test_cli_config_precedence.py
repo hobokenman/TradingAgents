@@ -23,6 +23,7 @@ SELECTIONS = {
     "codex_reasoning_effort": None,
     "anthropic_effort": None,
     "output_language": "English",
+    "buffett_researcher_enabled": True,
 }
 
 

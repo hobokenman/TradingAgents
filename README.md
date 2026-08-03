@@ -162,7 +162,7 @@ Macro, prediction-market, short-sale, and earnings-transcript data are enrichmen
 
 ### Buffett Researcher
 
-The Buffett Researcher is on by default and needs no setup. Its frame of reference is a distilled principles document — circle of competence, moats and pricing power, owner earnings, margin of safety, capital allocation, and the too-hard pile — and a baseline version ships with the package, so the agent works out of the box.
+The Buffett Researcher is on by default and needs no setup. In the interactive CLI it appears as a checkbox (pre-selected) in the Analysts Team step alongside Market / Sentiment / News / Fundamentals — uncheck it to skip. Its frame of reference is a distilled principles document — circle of competence, moats and pricing power, owner earnings, margin of safety, capital allocation, and the too-hard pile — and a baseline version ships with the package, so the agent works out of the box.
 
 To reground it on the letters themselves, build your own document from the full 1977–2025 corpus:
 
@@ -176,7 +176,7 @@ The result takes precedence over the shipped baseline automatically; delete it t
 
 The letters are copyrighted material published by Berkshire Hathaway. `fetch_buffett_letters.py` downloads them to your local cache for personal research; neither the letters nor any excerpt of them is committed to this repository or redistributed, and only the synthesized principles document reaches a prompt.
 
-Turn the agent off with `TRADINGAGENTS_BUFFETT_RESEARCHER=false` (or `config["buffett_researcher_enabled"] = False`), which removes the node from the graph and hands the analysts straight to the Bull Researcher. For crypto and other non-equity assets the agent abstains with a "Too Hard" verdict without making an LLM call, since the value framework has nothing to price.
+Turn the agent off in the Analysts Team checkbox, or with `TRADINGAGENTS_BUFFETT_RESEARCHER=false` (or `config["buffett_researcher_enabled"] = False`) for unattended runs. Either path removes the node from the graph and hands the analysts straight to the Bull Researcher. When the env var is set, the CLI skips the Buffett checkbox item and honors the env value. For crypto and other non-equity assets the agent abstains with a "Too Hard" verdict without making an LLM call, since the value framework has nothing to price.
 
 ### CLI Usage
 

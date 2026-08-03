@@ -590,16 +590,30 @@ def get_user_selections():
         )
         output_language = ask_output_language()
 
-    # Step 4: Select analysts
+    # Step 4: Select analysts (Buffett Researcher is an optional checkbox item
+    # in the same step; skipped from the prompt when TRADINGAGENTS_BUFFETT_RESEARCHER
+    # is set — same env-precedence rule as the steps below).
     console.print(
         create_question_box(
-            "Step 4: Analysts Team", "Select your LLM analyst agents for the analysis"
+            "Step 4: Analysts Team",
+            "Select your LLM analyst agents for the analysis",
         )
     )
-    selected_analysts = select_analysts(asset_type)
+    selected_analysts, buffett_from_checkbox = select_analysts(asset_type)
     console.print(
         f"[green]Selected analysts:[/green] {', '.join(analyst.value for analyst in selected_analysts)}"
     )
+    if os.environ.get("TRADINGAGENTS_BUFFETT_RESEARCHER"):
+        buffett_researcher_enabled = bool(DEFAULT_CONFIG["buffett_researcher_enabled"])
+        console.print(
+            f"[green]✓ Buffett Researcher from environment:[/green] {buffett_researcher_enabled}"
+        )
+    else:
+        buffett_researcher_enabled = buffett_from_checkbox
+        console.print(
+            f"[green]Buffett Researcher:[/green] "
+            f"{'enabled' if buffett_researcher_enabled else 'disabled'}"
+        )
 
     # Step 5: Research depth (skipped when both round counts are set via env).
     # Research depth maps to the debate + risk round counts; when both are
@@ -751,6 +765,7 @@ def get_user_selections():
         "asset_type": asset_type.value,
         "analysis_date": analysis_date,
         "analysts": selected_analysts,
+        "buffett_researcher_enabled": buffett_researcher_enabled,
         "research_depth": selected_research_depth,
         "llm_provider": selected_llm_provider.lower(),
         "backend_url": backend_url,
@@ -1054,6 +1069,11 @@ def _build_run_config(selections: dict, checkpoint: bool | None) -> dict:
     config["codex_reasoning_effort"] = selections.get("codex_reasoning_effort")
     config["anthropic_effort"] = selections.get("anthropic_effort")
     config["output_language"] = selections.get("output_language", "English")
+    # Buffett toggle from the Analysts Team checkbox; env wins when set.
+    if not os.environ.get("TRADINGAGENTS_BUFFETT_RESEARCHER"):
+        config["buffett_researcher_enabled"] = bool(
+            selections.get("buffett_researcher_enabled", True)
+        )
     # --checkpoint/--no-checkpoint overrides only when explicitly given; omitting
     # the flag preserves TRADINGAGENTS_CHECKPOINT_ENABLED / the default (#976).
     if checkpoint is not None:
